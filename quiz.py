@@ -1,56 +1,55 @@
-# quiz.py
-
-from question_model import Question, User
-from database import Database
+import psycopg2
 
 class Quiz:
     def __init__(self, db):
         self.db = db
 
     def get_questions(self):
-        questions_data = self.db.get_questions()
-        questions = []
-        for question in questions_data:
-            question_id, question_text, option1, option2, option3, option4 = question
-            options = [option1, option2, option3, option4]
-            correct_option = self.db.get_correct_answer(question_id)
-            questions.append(Question(question_id, question_text, options, correct_option))
-        return questions
+        return self.db.get_questions()
 
-    def display_question(self, question):
-        print(question.question_text)
-        for i, option in enumerate(question.options, 1):
+    def display_question(self, question_text, options):
+        print(question_text)
+        for i, option in enumerate(options, 1):
             print(f"{i}. {option}")
 
     def get_user_choice(self):
         while True:
-            choice = input("Enter the number of your answer: ")
+            choice = input("Enter your answer: ")
             if choice.isdigit() and 1 <= int(choice) <= 4:
-                return int(choice) - 1
-            print("Invalid input. Please enter a number between 1 and 4.")
+                return int(choice)
+            else:
+                print("Invalid choice. Please choose a number between 1 and 4.")
 
-    def evaluate_answer(self, user_answer_index, question):
-        user_answer = question.options[user_answer_index]
-        if user_answer.strip().lower() == question.correct_option.strip().lower():
+    def evaluate_answer(self, user_choice, correct_option):
+        if user_choice == correct_option:
             print("Correct!")
             return 1
         else:
             print("Incorrect!")
             return 0
 
-    def get_user_details(self):
-        name = input("Enter your name: ").strip()
-        surname = input("Enter your surname: ").strip()
-        group = input("Enter your group: ").strip()
-        return User(name, surname, group)
-
     def run_quiz(self):
-        user = self.get_user_details()
+        user_name = input("Enter your name: ")
+        user_surname = input("Enter your surname: ")
+        user_group = input("Enter your group: ")
+
         questions = self.get_questions()
+        score = 0
+        total_questions = len(questions)
 
         for question in questions:
-            self.display_question(question)
-            user_choice_index = self.get_user_choice()
-            user.score += self.evaluate_answer(user_choice_index, question)
+            question_id, question_text, option1, option2, option3, option4 = question
+            options = [option1, option2, option3, option4]
 
-        print(f"\n{user.name}, your final score is: {user.score}/{len(questions)}")
+            self.display_question(question_text, options)
+            user_choice = self.get_user_choice()
+
+            correct_answer = self.db.get_correct_answer(question_id)
+            correct_option = options.index(correct_answer) + 1 if correct_answer else None
+
+            if correct_option:
+                score += self.evaluate_answer(user_choice, correct_option)
+            else:
+                print("No correct answer found for this question.")
+
+        print(f"{user_name} {user_surname} ({user_group}), you have completed the quiz!\nYour final score: {score}/{total_questions}")

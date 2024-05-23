@@ -1,10 +1,8 @@
-# insert_questions.py
-
 import psycopg2
 
 # Connect to the PostgreSQL database
 conn = psycopg2.connect(
-    dbname="oop",
+    dbname="Oop",
     user="postgres",
     password="psql12",
     host="localhost",
@@ -26,15 +24,15 @@ questions = [
     ("Which of the following is not a primary color?", ["Red", "Yellow", "Green", "Blue"], 3)
 ]
 
-# Insert questions into the "queries" table
+# Insert questions into the "sual" table
 for question_text, options, correct_option in questions:
-    option1, option2, option3, option4 = options
-    c.execute("INSERT INTO queries (question_text, option1, option2, option3, option4) VALUES (%s, %s, %s, %s, %s) RETURNING question_id",
+    option1, option2, option3, option4 = options  # Unpack options list
+    c.execute("INSERT INTO sual (question_text, option1, option2, option3, option4) VALUES (%s, %s, %s, %s, %s) RETURNING sual_id",
               (question_text, option1, option2, option3, option4))
-
     question_id = c.fetchone()[0]
-
-    c.execute("INSERT INTO answer (question_id, is_correct, correct_option) VALUES (%s, %s, %s)",
+    
+    # Insert correct answer into the "cavab" table
+    c.execute("INSERT INTO cavab (sual_id, is_correct, correct_option) VALUES (%s, %s, %s)",
               (question_id, True, options[correct_option - 1]))
 
 # Commit the transaction
